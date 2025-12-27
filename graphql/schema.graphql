@@ -1,0 +1,82 @@
+scalar Upload
+@scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Upload")
+
+
+union LoginResult = AuthResult | Error
+
+union RegisterResult = AuthResult | Error
+
+type Query {
+    _empty: String @mock
+
+    showPost(id:ID!):Post!
+    @guard(with:["sanctum"])
+    @can(ability: "view", find: "id", model: "App\\Models\\Post")
+    @field(resolver:"App\\Http\\Resolvers\\PostResolver@show")
+}
+
+
+type Mutation{
+#    upload(file: Upload!): String
+
+    login(email:String!,password:String!): LoginResult
+    @field(resolver: "App\\Http\\Resolvers\\LoginResolver")
+
+    register(
+        name:String!
+        email:String!
+        password:String!
+        avatar:Upload
+    ): RegisterResult
+    @field(resolver: "App\\Http\\Resolvers\\RegisterResolver")
+
+    createPost(
+        title: String!
+        description: String!
+    ): Post!
+    @guard(with: ["sanctum"])
+    @field(resolver: "App\\Http\\Resolvers\\PostResolver@store")
+
+    updatePost(
+        id: ID!
+        title: String
+        description: String
+    ): Post!
+    @guard(with: ["sanctum"])
+    @can(ability: "update", find: "id", model: "App\\Models\\Post")
+    @field(resolver: "App\\Http\\Resolvers\\PostResolver@update")
+
+
+    destroyPost(id:ID):Message!
+    @guard(with: ["sanctum"])
+    @can(ability: "delete", find: "id" ,model: "App\\Models\\Post")
+    @field(resolver: "App\\Http\\Resolvers\\PostResolver@destroy")
+}
+
+type User{
+    id:String!
+    name:String!
+    email:String!
+    avatar_url: String
+    posts: [Post!]! @hasMany
+}
+
+type Post{
+    id:ID!
+    title:String!
+    description:String!
+    user:User! @belongsTo
+}
+
+type AuthResult{
+    token:String!
+    user:User!
+}
+
+type Error{
+    message:String!
+}
+
+type Message{
+    message:String!
+}
